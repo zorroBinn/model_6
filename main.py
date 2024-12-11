@@ -47,19 +47,30 @@ def euler_method(L, P0, dt, t_max):
 
 # Функция проверки эргодичности системы
 def is_ergodic(L):
-    visited = set()
+    def dfs(start, graph):
+        visited = set()
+        stack = [start]
+        while stack:
+            state = stack.pop()
+            if state not in visited:
+                visited.add(state)
+                for next_state, weight in enumerate(graph[state]):
+                    if weight > 0:
+                        stack.append(next_state)
+        return visited
 
-    def dfs(state):
-        if state in visited:  # Если состояние уже посещено, пропускаем
-            return
-        visited.add(state)  # Помечаем состояние как посещенное
-        for next_state in range(N):
-            # Проверяем, есть ли переходы между состояниями
-            if L[state, next_state] > 0 or L[next_state, state] > 0:
-                dfs(next_state)  # Рекурсивно обходим соседние состояния
+    # Прямая проверка достижимости из каждого состояния
+    for i in range(N):
+        if len(dfs(i, L)) < N:  # Если из i нельзя достигнуть всех состояний
+            return False
 
-    dfs(0)  # Начинаем обход с первого состояния
-    return len(visited) == N  # Система эргодична, если посещены все состояния
+    # Обратная проверка достижимости (транспонированный граф)
+    LT = L.T  # Транспонирование графа
+    for i in range(N):
+        if len(dfs(i, LT)) < N:  # Если в i нельзя попасть из всех состояний
+            return False
+
+    return True
 
 # Функция нахождения предельных вероятностей
 def find_steady_state(A):
